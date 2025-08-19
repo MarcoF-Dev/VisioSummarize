@@ -1,0 +1,276 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  background-color: white;
+  min-height: 100vh;
+  font-family: "Poppins", sans-serif;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px 20px;
+}
+main {
+  max-width: 920px;
+  margin: 0 auto;
+}
+#title {
+  display: flex;
+  align-items: center;
+}
+#title .logo {
+  height: 75px;
+  margin-right: 10px;
+}
+#title h1 {
+  font-size: 24px;
+  font-weight: 600;
+}
+#navbar {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+#navbar ul {
+  display: flex;
+  list-style: none;
+  gap: 20px;
+  margin-right: 20px;
+}
+#navbar li {
+  margin-right: 20px;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+}
+#navbar li:hover {
+  color: #0056b3;
+  cursor: pointer;
+}
+#navbar li::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #088ff0;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+#navbar li:hover::after {
+  transform: scaleX(1);
+}
+#navbar button {
+  margin-left: auto;
+  padding: 10px 20px;
+  background-color: #088ff0;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
+  transition: all 0.3s ease;
+}
+#navbar button:hover {
+  background-color: #0056b3;
+}
+
+/* UPLOAD SECTION */
+#uploadSection {
+  padding: 20px;
+
+  border-radius: 5px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
+  text-align: center;
+}
+#uploadSection h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
+.file-drop {
+  display: flex;
+  flex-direction: column;
+
+  min-height: 300px;
+  gap: 16px;
+  align-items: center;
+
+  border: 2px dashed rgba(8, 143, 240, 0.35);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(8, 143, 240, 0.03), transparent);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+  max-height: 700px;
+  overflow-y: auto;
+}
+
+.file-drop:hover,
+.file-drop:focus-within {
+  border-color: rgba(8, 143, 240, 0.65);
+  box-shadow: 0 6px 18px rgba(8, 143, 240, 0.06);
+  transform: translateY(-1px);
+}
+
+.file-drop__icon {
+  height: 125px;
+}
+
+/* Text block */
+.file-drop__text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.file-drop__title {
+  display: block;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  color: #0b2540;
+  font-weight: 500;
+}
+#fileInput {
+  display: none;
+}
+.file-drop__supported {
+  color: #0b6fe0;
+  font-weight: 600;
+}
+/* File Uploaded */
+#labelContainer.dragover {
+  background: rgba(13, 110, 253, 0.08);
+  border-color: #0d6efd;
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(13, 110, 253, 0.4);
+}
+.imageContainer {
+  position: relative;
+  max-width: 100%;
+}
+.pdfContainer {
+  max-width: 100%;
+  position: relative;
+}
+.labelImg {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.imageContainer .closeButton,
+.textContainer .closeButton,
+.pdfContainer .closeButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.6); /* sfondo scuro semitrasparente */
+  color: white; /* X bianca */
+  border: none;
+  border-radius: 10px; /* forma rotonda */
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.imageContainer .closeButton:hover,
+.textContainer .closeButton:hover,
+.pdfContainer .closeButton:hover {
+  background-color: rgba(255, 0, 0, 0.8); /* rosso al passaggio */
+  transform: scale(1.1); /* leggero ingrandimento */
+}
+#fileDropTitleContainer.hidden {
+  display: none;
+}
+
+.textContainer {
+  position: relative;
+  width: 95%;
+  margin: 0 auto;
+  padding: 12px 16px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  margin-top: 12px;
+  font-size: 1.2rem;
+}
+/* Scroll bar Style */
+.file-drop::-webkit-scrollbar {
+  width: 12px;
+}
+
+.file-drop::-webkit-scrollbar-track {
+  background: rgba(8, 143, 240, 0.05);
+  border-radius: 12px;
+}
+
+.file-drop::-webkit-scrollbar-thumb {
+  background: rgba(8, 143, 240, 0.35);
+  border-radius: 12px;
+  border: 3px solid rgba(8, 143, 240, 0.05);
+  transition: background 0.3s ease;
+}
+
+.file-drop::-webkit-scrollbar-thumb:hover {
+  background: rgba(8, 143, 240, 0.6);
+}
+
+/* Scrollbar per Firefox */
+.file-drop {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(8, 143, 240, 0.35) rgba(8, 143, 240, 0.05);
+}
+/*  OUTPUT SECTION */
+
+#outputSection {
+  padding: 20px;
+  border-radius: 5px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#outputSection #btnContainer {
+  display: flex;
+  gap: 10px;
+}
+#btnContainer button {
+  padding: 10px 20px;
+
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: "Poppins", sans-serif;
+  transition: all 0.3s ease;
+  font-size: 1.1rem;
+}
+#btnContainer #extractTextButton {
+  background-color: #088ff0;
+  color: white;
+}
+#btnContainer #extractTextButton:hover {
+  background-color: #0056b3;
+}
+#btnContainer #summarizeTextButton {
+  color: black;
+  background-color: #eef1f6;
+}
+#btnContainer #summarizeTextButton:hover {
+  background-color: #d1d9df;
+}

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Un potente strumento per l'estrazione e il riassunto del testo da documenti PDF e immagini."
+    />
+
+    <title>VisioSummarizer</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css"
+    />
+    <link rel="icon" href="assets/icona.png" />
+  </head>
+  <body>
+    <header>
+      <div id="title">
+        <img src="assets/logo.png" alt="Logo" class="logo" />
+        <h1>VisioSummarizer</h1>
+      </div>
+      <nav id="navbar">
+        <ul>
+          <li><span>Home</span></li>
+          <li><span>About</span></li>
+          <li><span>Contact</span></li>
+        </ul>
+
+        <button id="uploadButtonNavbar">Upload</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="uploadSection">
+        <h2>Carica il tuo documento</h2>
+        <label class="file-drop" for="fileInput" id="labelContainer">
+          <div id="fileDropContainer"></div>
+          <div id="fileDropTitleContainer">
+            <img src="assets/IconaLabel.png" class="file-drop__icon" />
+
+            <span class="file-drop__title"
+              >Trascina qui un file oppure clicca per selezionare un file dal
+              tuo computer</span
+            >
+          </div>
+
+          <span class="file-drop__supported"
+            >Formati supportati: PDF, JPG, PNG, Txt</span
+          >
+
+          <input id="fileInput" class="file-drop__input" type="file" multiple />
+        </label>
+      </section>
+
+      <section id="outputSection">
+        <div id="btnContainer">
+          <button id="extractTextButton">Estrai testo</button>
+          <button id="summarizeTextButton">Riassumi testo</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/toastify-js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.10.111/pdf.min.js"></script>
+  </body>
+</html>
