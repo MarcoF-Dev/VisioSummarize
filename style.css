@@ -9,6 +9,7 @@ body {
   background-color: white;
   min-height: 100vh;
   font-family: "Poppins", sans-serif;
+  overflow-x: hidden;
 }
 header {
   display: flex;
@@ -273,4 +274,69 @@ main {
 }
 #btnContainer #summarizeTextButton:hover {
   background-color: #d1d9df;
+}
+#previewContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+#outputSection #previewTextContainer,
+#outputSection #previewSummaryContainer {
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+#previewTextContainer p,
+#previewSummaryContainer p {
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+#extractedTextPreview,
+#summaryTextPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.text-placeholder {
+  height: 1.2em; /* altezza della riga */
+  width: 100%;
+  /* larghezza massima della riga */
+  background-color: #ccc; /* grigio chiaro */
+  border-radius: 4px;
+  opacity: 0.5;
+  position: relative;
+  overflow: hidden;
+}
+
+#summaryTextPreview .shimmer::after,
+#extractedTextPreview .shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -150%;
+  }
+  100% {
+    left: 150%;
+  }
 }

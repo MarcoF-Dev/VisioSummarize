@@ -18,6 +18,7 @@ let uploadedFilesType = {
   pdf: 0,
 };
 let fileForProcessing = [];
+let imgForOCR = [];
 
 const maxSizePdf = 5 * 1024 * 1024;
 const maxSizeImg = 3 * 1024 * 1024;
@@ -262,9 +263,9 @@ function createToastify(message, type) {
 }
 
 const extractTextButton = document.getElementById("extractTextButton");
-extractTextButton.addEventListener("click", () =>
-  pdfToImages(uploadedFiles.pdf)
-);
+extractTextButton.addEventListener("click", () => {
+  pdfToImages(uploadedFiles.pdf);
+});
 async function pdfToImages(pdfFiles) {
   const allImages = []; // qui salveremo tutte le immagini
 
@@ -306,5 +307,70 @@ function getFileForProcessing() {
   if (fileForProcessing.length <= 0) {
     createToastify("Nessun file da elaborare", "info");
   } else {
+    processImage();
   }
+}
+
+let processedImages = []; // array finale con le immagini preprocessate
+
+async function processImage() {
+  processedImages = []; // reset ogni volta
+
+  for (let i = 0; i < fileForProcessing.length; i++) {
+    let current = fileForProcessing[i];
+    let img = new Image();
+
+    // Se è un File (Blob)
+    if (current instanceof File) {
+      img.src = URL.createObjectURL(current);
+    }
+    // Se è un dataURL (da pdfToImages)
+    else if (typeof current === "string") {
+      img.src = current;
+    }
+
+    await new Promise((resolve) => {
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        // --- resize se troppo piccola ---
+        const scale = 2; // ingrandisci un po’ per leggibilità
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        // --- grayscale ---
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        for (let j = 0; j < data.length; j += 4) {
+          const avg = (data[j] + data[j + 1] + data[j + 2]) / 3;
+          data[j] = data[j + 1] = data[j + 2] = avg;
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        // Salvo il risultato come dataURL
+        const processedDataUrl = canvas.toDataURL("image/png");
+        processedImages.push(processedDataUrl);
+
+        console.log(`Immagine ${i + 1} processata`);
+        resolve();
+      };
+    });
+  }
+
+  createToastify("Tutte le immagini sono state preprocessate", "success");
+  shimmerStyle();
+  finalArray();
+}
+
+function finalArray() {
+  imgForOCR = [...processedImages];
+  console.log(imgForOCR);
+}
+function shimmerStyle() {
+  const placeholders = document.querySelectorAll(".text-placeholder");
+  placeholders.forEach((placeholder) => {
+    placeholder.classList.add("shimmer");
+  });
 }
