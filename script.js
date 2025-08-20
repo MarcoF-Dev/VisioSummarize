@@ -17,6 +17,7 @@ let uploadedFilesType = {
   image: 0,
   pdf: 0,
 };
+let fileForOcr = [];
 
 const maxSizePdf = 5 * 1024 * 1024;
 const maxSizeImg = 3 * 1024 * 1024;
@@ -213,6 +214,8 @@ async function renderPDF(currentFile) {
   }
 }
 
+// esempio di utilizzo
+
 // Controllo se ci sono file nel container
 function checkEmptyContainer() {
   const filesLeft = fileContainer.querySelectorAll(".uploadedFileContainer");
@@ -256,4 +259,49 @@ function createToastify(message, type) {
     position: "right",
     backgroundColor: backgroundColor,
   }).showToast();
+}
+
+const extractTextButton = document.getElementById("extractTextButton");
+extractTextButton.addEventListener("click", () =>
+  pdfToImages(uploadedFiles.pdf)
+);
+async function pdfToImages(pdfFiles) {
+  const allImages = []; // qui salveremo tutte le immagini
+
+  for (const file of pdfFiles) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+
+      // canvas temporaneo
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const viewport = page.getViewport({ scale: 2 }); // maggiore DPI
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+      // trasforma il canvas in dataURL immagine
+      const imgData = canvas.toDataURL("image/png");
+      allImages.push(imgData);
+    }
+  }
+
+  for (let i = 0; i < allImages.length; i++) {
+    fileForOcr.push(allImages[i]);
+  }
+  getFileForOcr();
+  return allImages;
+}
+
+function getFileForOcr() {
+  let img = [...uploadedFiles.image];
+  for (let i = 0; i < img.length; i++) {
+    fileForOcr.push(img[i]);
+  }
+
+  console.log(fileForOcr);
 }
