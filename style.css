@@ -281,15 +281,15 @@ main {
   flex-direction: column;
   gap: 20px;
 }
-
 #outputSection #previewTextContainer,
 #outputSection #previewSummaryContainer {
   width: 100%;
   margin-top: 12px;
-  padding: 12px 16px;
+  padding: 12px 16px 4rem 16px;
   border: 1px solid #eee;
   border-radius: 8px;
   background-color: #f9f9f9;
+  position: relative;
 }
 #previewTextContainer p,
 #previewSummaryContainer p {
@@ -313,6 +313,9 @@ main {
   opacity: 0.5;
   position: relative;
   overflow: hidden;
+}
+.text-placeholder.hidden {
+  display: none;
 }
 
 #summaryTextPreview .shimmer::after,
@@ -339,4 +342,110 @@ main {
   100% {
     left: 150%;
   }
+}
+
+/* Container dei testi estratti */
+#extractedTextContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  position: relative;
+}
+
+.textBlock {
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 10px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.textBlock:hover {
+  transform: scale(1.01);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.textContent {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  color: #333;
+}
+.deleteButton {
+  background-color: rgba(244, 67, 54, 0.5);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: "Poppins", sans-serif;
+}
+.deleteButton i {
+  font-size: 16px;
+}
+
+.deleteButton:hover {
+  background-color: #c62828;
+}
+
+.buttonsContainer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.buttonsContainer button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background-color: #088ff0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.buttonsContainer button:hover {
+  background-color: #006fc3;
+  transform: scale(1.1);
+}
+
+.buttonsContainer button svg {
+  width: 16px;
+  height: 16px;
+  fill: #fff;
+}
+
+#finalizeTextButton {
+  position: absolute;
+  bottom: 10px;
+  right: 20px;
+  background-color: #4caf50;
+  padding: 10px 20px;
+  font-family: "Poppins", sans-serif;
+  font-size: 1rem;
+  border-radius: 10px;
+  border: none;
+  color: white;
+}
+#finalizeTextButton:hover {
+  background-color: #388e3c;
+  cursor: pointer;
+}
+#finalizeTextButton.hidden {
+  display: none;
 }
