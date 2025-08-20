@@ -17,7 +17,7 @@ let uploadedFilesType = {
   image: 0,
   pdf: 0,
 };
-let fileForOcr = [];
+let fileForProcessing = [];
 
 const maxSizePdf = 5 * 1024 * 1024;
 const maxSizeImg = 3 * 1024 * 1024;
@@ -291,17 +291,20 @@ async function pdfToImages(pdfFiles) {
   }
 
   for (let i = 0; i < allImages.length; i++) {
-    fileForOcr.push(allImages[i]);
+    fileForProcessing.push(allImages[i]);
   }
-  getFileForOcr();
+  getFileForProcessing();
   return allImages;
 }
 
-function getFileForOcr() {
+function getFileForProcessing() {
   let img = [...uploadedFiles.image];
   for (let i = 0; i < img.length; i++) {
-    fileForOcr.push(img[i]);
+    fileForProcessing.push(img[i]);
   }
 
-  console.log(fileForOcr);
+  if (fileForProcessing.length <= 0) {
+    createToastify("Nessun file da elaborare", "info");
+  } else {
+  }
 }
