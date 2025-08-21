@@ -19,6 +19,7 @@ let processedImages = [];
 let textAfterOcr = [];
 let textToShow = [];
 let ocrIsScanning = false;
+let canSummarize = false;
 
 const maxSizePdf = 5 * 1024 * 1024;
 const maxSizeImg = 3 * 1024 * 1024;
@@ -140,8 +141,10 @@ async function handlePDF(file) {
       const canvas = document.createElement("canvas");
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport })
-        .promise;
+      await page.render({
+        canvasContext: canvas.getContext("2d", { willReadFrequently: true }),
+        viewport,
+      }).promise;
       pdfContainer.appendChild(canvas);
     }
 
@@ -207,6 +210,7 @@ function createToastify(message, type) {
     close: true,
     gravity: "top",
     position: "right",
+
     backgroundColor: bg,
   }).showToast();
 }
@@ -231,8 +235,10 @@ async function pdfToImages(pdfFiles) {
       const viewport = page.getViewport({ scale: 2 });
       canvas.width = viewport.width;
       canvas.height = viewport.height;
-      await page.render({ canvasContext: canvas.getContext("2d"), viewport })
-        .promise;
+      await page.render({
+        canvasContext: canvas.getContext("2d", { willReadFrequently: true }),
+        viewport,
+      }).promise;
       allImages.push(canvas.toDataURL("image/png"));
     }
   }
@@ -256,7 +262,7 @@ async function processImage() {
       (resolve) =>
         (img.onload = () => {
           const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
           const scale = 2;
           canvas.width = img.width * scale;
           canvas.height = img.height * scale;
@@ -277,7 +283,10 @@ async function processImage() {
         })
     );
   }
-  createToastify("Immagini elaborate con successo", "success");
+  if (processedImages.length > 0) {
+    createToastify("Immagini elaborate con successo", "success");
+  }
+
   finalArray();
 }
 
@@ -297,7 +306,9 @@ async function ocrScan() {
   for (let img of imgForOCR) {
     const {
       data: { text },
-    } = await Tesseract.recognize(img, "ita");
+    } = await Tesseract.recognize(img, "ita", {
+      langPath: "dataOcr",
+    });
     textAfterOcr.push(text);
   }
   placeholder.forEach((ph) => ph.classList.remove("shimmer"));
@@ -422,10 +433,26 @@ function renderFinalText(textArray) {
     let finalText = textToShow.join("\n\n");
     // Mostra il testo finale in un'area di anteprima
 
-    extractedTextContainer.innerHTML = `<span>${finalText}</span>`;
+    extractedTextContainer.innerHTML = `<span contenteditable ="true">${finalText}</span>`;
     finalTxtBtn.classList.add("hidden");
+    canSummarize = true;
   });
 }
+
+const summarizeBtn = document.getElementById("summarizeTextButton");
+summarizeBtn.addEventListener("click", () => {
+  if (extractedTextContainer.children.length === 0) {
+    createToastify("Estrai testo e ordinalo prima di riassumere.", "error");
+    canSummarize = false;
+    return;
+  } else if (extractedTextContainer.children.length > 0 && !canSummarize) {
+    createToastify("Conferma testo per riassunto", "error");
+  } else if (canSummarize) {
+    createToastify("Invio testo per Riassunto", "success");
+  }
+
+  // Logica per il riassunto del testo
+});
 
 /* --- Drag & Drop --- */
 label.addEventListener("dragover", (e) => {
