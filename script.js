@@ -21,8 +21,8 @@ let textToShow = [];
 let ocrIsScanning = false;
 let canSummarize = false;
 
-const maxSizePdf = 5 * 1024 * 1024;
-const maxSizeImg = 3 * 1024 * 1024;
+const maxSizePdf = 5 * 1024 * 1024; // 5 MB
+const maxSizeImg = 3 * 1024 * 1024; // 3 MB
 
 /* --- Funzioni principali --- */
 
@@ -31,44 +31,75 @@ function addFile(filesFromDrop) {
     filesFromDrop instanceof Event
       ? Array.from(fileInput.files)
       : Array.from(filesFromDrop);
+
   if (!files.length) return createToastify("Nessun file selezionato", "error");
 
   labelContent.classList.add("hidden");
 
   files.forEach((currentFile) => {
+    // evita duplicati
     if (
       [
         ...uploadedFiles.image,
         ...uploadedFiles.pdf,
         ...uploadedFiles.text,
       ].some((f) => f.name === currentFile.name && f.size === currentFile.size)
-    )
+    ) {
       return createToastify(`${currentFile.name} già caricato`, "error");
+    }
 
-    if (currentFile.type.startsWith("image/") && currentFile.size > maxSizeImg)
+    // blocca video
+    if (currentFile.type.startsWith("video/")) {
+      return createToastify(
+        `${currentFile.name} è un video: non supportato`,
+        "error"
+      );
+    }
+
+    // controllo dimensione immagini
+    if (
+      currentFile.type.startsWith("image/") &&
+      currentFile.size > maxSizeImg
+    ) {
+      checkEmptyContainer();
       return createToastify(
         `${currentFile.name} troppo grande (Max 3 MB)`,
         "error"
       );
+    }
 
+    // controllo dimensione pdf
     if (
       (currentFile.type === "application/pdf" ||
         currentFile.name.endsWith(".pdf")) &&
       currentFile.size > maxSizePdf
-    )
+    ) {
+      checkEmptyContainer();
       return createToastify(
         `${currentFile.name} troppo grande (Max 5 MB)`,
         "error"
       );
+    }
 
-    if (currentFile.type.startsWith("image/")) handleImage(currentFile);
-    else if (
+    // gestione per tipo
+    if (
+      currentFile.type.startsWith("image/") ||
+      /\.(jpg|jpeg|png|heic)$/i.test(currentFile.name)
+    ) {
+      handleImage(currentFile);
+    } else if (
       currentFile.type === "application/pdf" ||
       currentFile.name.endsWith(".pdf")
-    )
+    ) {
       handlePDF(currentFile);
-    else if (currentFile.type === "text/plain") handleText(currentFile);
-    else createToastify("File non supportato", "error");
+    } else if (
+      currentFile.type === "text/plain" ||
+      currentFile.name.endsWith(".txt")
+    ) {
+      handleText(currentFile);
+    } else {
+      createToastify("File non supportato", "error");
+    }
   });
 
   fileInput.value = "";
@@ -113,6 +144,7 @@ function handleImage(file) {
 async function handlePDF(file) {
   if (uploadedFilesType.pdf >= 3)
     return createToastify("Limite di 3 PDF raggiunto", "error");
+
   try {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
@@ -210,7 +242,6 @@ function createToastify(message, type) {
     close: true,
     gravity: "top",
     position: "right",
-
     backgroundColor: bg,
   }).showToast();
 }
@@ -223,6 +254,8 @@ extractTextButton.addEventListener("click", () => {
   pdfToImages(uploadedFiles.pdf);
   createToastify("Estrazione testo avviata", "info");
 });
+
+// resto del codice OCR invariato...
 
 async function pdfToImages(pdfFiles) {
   const allImages = [];
