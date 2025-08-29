@@ -545,10 +545,8 @@ summarizeBtn.addEventListener("click", () => {
 
   console.log("Testo da inviare:", textToSummarize);
   const cleanedText = cleanText(textToSummarize);
-
-  // Disabilita il pulsante durante l'elaborazione
-
   sendToGemini(cleanedText);
+  // Disabilita il pulsante durante l'elaborazione
 });
 
 function cleanText(text) {
@@ -556,22 +554,140 @@ function cleanText(text) {
 }
 
 async function sendToGemini(text) {
+  const shimmer = document.querySelectorAll(
+    "#previewSummaryContainer .text-placeholder"
+  );
+  const textContainer = document.getElementById("summaryTextContainer");
+
+  // Pulisci il contenitore del riassunto precedente
+  textContainer.innerHTML = "";
+
+  shimmer.forEach((placeholder) => placeholder.classList.add("shimmer"));
+
+  if (!text || text.trim() === "") {
+    createToastify("Testo vuoto!", "error");
+    logSummary("Testo vuoto, impossibile riassumere", "error");
+    return;
+  }
+
+  // Controllo lunghezza testo
+  if (text.length > 100000) {
+    logSummary(
+      `⚠️ Testo molto lungo (${text.length} caratteri), potrebbe richiedere più tempo`,
+      "warning"
+    );
+    createToastify("Testo molto lungo, elaborazione in corso...", "info");
+  }
+
+  logSummary(
+    `📤 Invio testo al server Gemini per il riassunto (${text.length} caratteri)...`,
+    "info"
+  );
+
   try {
-    const response = await fetch("/summarize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
+    // Timeout di 60 secondi per testi lunghi
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    const response = await fetch(
+      "https://visiosummarize.onrender.com/summarize",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+
     const data = await response.json();
-    displaySummary(data.summary);
+    console.log("Risposta server:", data);
+
+    const summary = Array.isArray(data)
+      ? data[0].summary_text
+      : data.summary_text;
+
+    shimmer.forEach((placeholder) => {
+      placeholder.classList.remove("shimmer");
+      placeholder.classList.add("hidden");
+    });
+
+    if (!summary || summary === "Nessun riassunto trovato") {
+      logSummary("❌ Nessun riassunto trovato nella risposta Gemini", "error");
+      createToastify("Errore: nessun riassunto trovato", "error");
+      return;
+    }
+
+    logSummary("✅ Riassunto ricevuto con successo da Gemini", "success");
+
+    const textSummarized = document.createElement("p");
+    textSummarized.textContent = summary;
+    textSummarized.classList.add("textContentSummary");
+    textContainer.appendChild(textSummarized);
+
+    const copy = document.createElement("button");
+    copy.textContent = "Copia Riassunto";
+    copy.addEventListener("click", () => {
+      navigator.clipboard.writeText(textSummarized.textContent);
+      createToastify("Riassunto copiato negli appunti!", "success");
+    });
+    copy.classList.add("copyButton");
+    textContainer.appendChild(copy);
   } catch (err) {
+    logSummary(`❌ Errore richiesta Gemini: ${err.message}`, "error");
+
+    if (err.name === "AbortError") {
+      createToastify(
+        "Timeout: la richiesta ha impiegato troppo tempo. Prova con un testo più breve.",
+        "error"
+      );
+    } else if (err.message.includes("troppo lungo")) {
+      createToastify(
+        "Testo troppo lungo. Prova con un testo più breve.",
+        "error"
+      );
+    } else if (err.message.includes("Failed to fetch")) {
+      createToastify(
+        "Errore di connessione al server. Verifica che il backend sia attivo.",
+        "error"
+      );
+    } else {
+      createToastify(`Errore durante il riassunto: ${err.message}`, "error");
+    }
     createToastify("Errore nella richiesta al server", "error");
     console.error(err);
   }
 }
 
-function displaySummary(summary) {
-  const summaryContainer = document.getElementById("summaryContainer");
-  summaryContainer.textContent =
-    summary || "Nessun riassunto trovato nella risposta";
+/* --- Logger aggiornato --- */
+
+const summaryLogger = document.getElementById("summaryLogger");
+function logSummary(message, type = "info") {
+  const msgDiv = document.createElement("div");
+  msgDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+  msgDiv.style.marginBottom = "4px";
+  msgDiv.style.fontFamily = "monospace";
+
+  switch (type) {
+    case "error":
+      msgDiv.style.color = "#f44336"; // rosso
+      break;
+    case "success":
+      msgDiv.style.color = "#4caf50"; // verde
+      break;
+    case "warning":
+      msgDiv.style.color = "#ff9800"; // arancione
+      break;
+    default:
+      msgDiv.style.color = "#9e9e9e"; // grigio info
+  }
+
+  summaryLogger.appendChild(msgDiv);
+  summaryLogger.scrollTop = summaryLogger.scrollHeight;
 }
