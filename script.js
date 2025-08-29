@@ -321,7 +321,7 @@ async function ocrScan() {
   shimmer.forEach((placeholder) => placeholder.classList.add("shimmer"));
   for (let img of imgForOCR) {
     await Tesseract.recognize(img, "ita", {
-      langPath: "https://marcof-dev.github.io/VisioSummarize/dataOcr",
+      langPath: "https://tessdata.projectnaptha.com/4.0.0",
       logger: (m) => {
         if (m.progress)
           progressBar.style.width = `${Math.floor(m.progress * 100)}%`;
