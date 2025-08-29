@@ -7,6 +7,7 @@ const extractTextButton = document.getElementById("extractTextButton");
 const extractedTextContainer = document.getElementById(
   "extractedTextContainer"
 );
+const summarizeBtn = document.getElementById("summarizeTextButton");
 
 uploadBtn.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", addFile);
@@ -18,6 +19,7 @@ let imgForOCR = [];
 let processedImages = [];
 let textAfterOcr = [];
 let textToShow = [];
+let textToSummarize = "";
 let ocrIsScanning = false;
 let canSummarize = false;
 
@@ -25,7 +27,6 @@ const maxSizePdf = 5 * 1024 * 1024; // 5 MB
 const maxSizeImg = 3 * 1024 * 1024; // 3 MB
 
 /* --- Funzioni principali --- */
-
 function addFile(filesFromDrop) {
   let files =
     filesFromDrop instanceof Event
@@ -37,69 +38,53 @@ function addFile(filesFromDrop) {
   labelContent.classList.add("hidden");
 
   files.forEach((currentFile) => {
-    // evita duplicati
     if (
       [
         ...uploadedFiles.image,
         ...uploadedFiles.pdf,
         ...uploadedFiles.text,
       ].some((f) => f.name === currentFile.name && f.size === currentFile.size)
-    ) {
+    )
       return createToastify(`${currentFile.name} già caricato`, "error");
-    }
 
-    // blocca video
-    if (currentFile.type.startsWith("video/")) {
+    if (currentFile.type.startsWith("video/"))
       return createToastify(
         `${currentFile.name} è un video: non supportato`,
         "error"
       );
-    }
 
-    // controllo dimensione immagini
-    if (
-      currentFile.type.startsWith("image/") &&
-      currentFile.size > maxSizeImg
-    ) {
-      checkEmptyContainer();
+    if (currentFile.type.startsWith("image/") && currentFile.size > maxSizeImg)
       return createToastify(
         `${currentFile.name} troppo grande (Max 3 MB)`,
         "error"
       );
-    }
 
-    // controllo dimensione pdf
     if (
       (currentFile.type === "application/pdf" ||
         currentFile.name.endsWith(".pdf")) &&
       currentFile.size > maxSizePdf
-    ) {
-      checkEmptyContainer();
+    )
       return createToastify(
         `${currentFile.name} troppo grande (Max 5 MB)`,
         "error"
       );
-    }
 
-    // gestione per tipo
     if (
       currentFile.type.startsWith("image/") ||
       /\.(jpg|jpeg|png|heic)$/i.test(currentFile.name)
-    ) {
+    )
       handleImage(currentFile);
-    } else if (
+    else if (
       currentFile.type === "application/pdf" ||
       currentFile.name.endsWith(".pdf")
-    ) {
+    )
       handlePDF(currentFile);
-    } else if (
+    else if (
       currentFile.type === "text/plain" ||
       currentFile.name.endsWith(".txt")
-    ) {
+    )
       handleText(currentFile);
-    } else {
-      createToastify("File non supportato", "error");
-    }
+    else createToastify("File non supportato", "error");
   });
 
   fileInput.value = "";
@@ -247,15 +232,12 @@ function createToastify(message, type) {
 }
 
 /* --- OCR & Preprocessing --- */
-
 extractTextButton.addEventListener("click", () => {
   if (ocrIsScanning) return createToastify("OCR già in esecuzione", "info");
   resetProcessingArrays();
   pdfToImages(uploadedFiles.pdf);
   createToastify("Estrazione testo avviata", "info");
 });
-
-// resto del codice OCR invariato...
 
 async function pdfToImages(pdfFiles) {
   const allImages = [];
@@ -316,10 +298,8 @@ async function processImage() {
         })
     );
   }
-  if (processedImages.length > 0) {
+  if (processedImages.length > 0)
     createToastify("Immagini elaborate con successo", "success");
-  }
-
   finalArray();
 }
 
@@ -329,23 +309,37 @@ function finalArray() {
 }
 
 async function ocrScan() {
-  const placeholder = document.querySelectorAll(
+  const logText = document.getElementById("ocrLogText");
+  const progressBar = document.getElementById("ocrProgressBar");
+  const shimmer = document.querySelectorAll(
     "#extractedTextPreview .text-placeholder"
   );
-  placeholder.forEach((ph) => ph.classList.add("shimmer"));
+
   ocrIsScanning = true;
   textAfterOcr = [];
   textToShow = [];
+  shimmer.forEach((placeholder) => placeholder.classList.add("shimmer"));
   for (let img of imgForOCR) {
-    const {
-      data: { text },
-    } = await Tesseract.recognize(img, "ita", {
+    await Tesseract.recognize(img, "ita", {
       langPath: "dataOcr",
+      logger: (m) => {
+        if (m.progress)
+          progressBar.style.width = `${Math.floor(m.progress * 100)}%`;
+        if (m.status)
+          logText.textContent = `${m.status} (${Math.floor(
+            (m.progress || 0) * 100
+          )}%)`;
+      },
+    }).then(({ data: { text } }) => {
+      textAfterOcr.push(text);
+      shimmer.forEach((placeholder) => placeholder.classList.remove("shimmer"));
     });
-    textAfterOcr.push(text);
   }
-  placeholder.forEach((ph) => ph.classList.remove("shimmer"));
+
   ocrIsScanning = false;
+  logText.textContent = "OCR completato!";
+  progressBar.style.width = "100%";
+
   textToShow = [...textAfterOcr, ...uploadedFiles.text];
   cleanTextAfterOcr();
   renderFinalText(textToShow);
@@ -372,30 +366,27 @@ function resetProcessingArrays() {
   textToShow = [];
 }
 
-/* --- Funzione animazione fluida per spostamento blocchi --- */
+/* --- Render testi estratti --- */
 function moveWithAnimation(block, target) {
   const rect1 = block.getBoundingClientRect();
   const rect2 = target.getBoundingClientRect();
   const deltaY = rect1.top - rect2.top;
-
   block.style.transition = "none";
   block.style.transform = `translateY(${deltaY}px)`;
-
   requestAnimationFrame(() => {
     block.style.transition = "transform 0.3s ease";
     block.style.transform = "translateY(0)";
   });
 }
 
-/* --- Render testi estratti --- */
 function renderFinalText(textArray) {
   const extractedTextAnimation = document.querySelectorAll(
     "#extractedTextPreview .text-placeholder"
   );
   const finalTxtBtn = document.getElementById("finalizeTextButton");
-  extractedTextAnimation.forEach((placeholder) => {
-    placeholder.classList.add("hidden");
-  });
+  extractedTextAnimation.forEach((placeholder) =>
+    placeholder.classList.add("hidden")
+  );
   extractedTextContainer.innerHTML = "";
 
   textArray.forEach((text, index) => {
@@ -410,10 +401,10 @@ function renderFinalText(textArray) {
       textBlock.remove();
       updateTextArrayOrder();
       if (extractedTextContainer.children.length === 0) {
-        extractedTextAnimation.forEach((placeholder) => {
-          placeholder.classList.remove("hidden");
-          finalTxtBtn.classList.add("hidden");
-        });
+        extractedTextAnimation.forEach((placeholder) =>
+          placeholder.classList.remove("hidden")
+        );
+        finalTxtBtn.classList.add("hidden");
       }
     });
 
@@ -447,7 +438,6 @@ function renderFinalText(textArray) {
     });
 
     finalTxtBtn.classList.remove("hidden");
-
     buttonsContainer.append(upButton, downButton);
     textBlock.append(textContent, buttonsContainer, deleteBtn);
     extractedTextContainer.appendChild(textBlock);
@@ -459,34 +449,176 @@ function renderFinalText(textArray) {
     ).map((b) => b.querySelector(".textContent").textContent);
   }
 
-  /*  DA SISTEMARE!!!!!!!!!! */
-
   finalTxtBtn.addEventListener("click", () => {
     createToastify("Testo finalizzato con successo!", "success");
     let finalText = textToShow.join("\n\n");
-    // Mostra il testo finale in un'area di anteprima
-
-    extractedTextContainer.innerHTML = `<span contenteditable ="true">${finalText}</span>`;
+    textToSummarize = finalText;
+    extractedTextContainer.innerHTML = `<span contenteditable="true">${finalText}</span>`;
     finalTxtBtn.classList.add("hidden");
     canSummarize = true;
   });
 }
 
-const summarizeBtn = document.getElementById("summarizeTextButton");
+/* --- Invia testo a ChatGPT --- */
 summarizeBtn.addEventListener("click", () => {
-  if (extractedTextContainer.children.length === 0) {
-    createToastify("Estrai testo e ordinalo prima di riassumere.", "error");
-    canSummarize = false;
+  if (!canSummarize) {
+    createToastify("Finalizza il testo prima di riassumere.", "error");
+    logSummary("Tentativo di riassumere senza testo finalizzato", "error");
     return;
-  } else if (extractedTextContainer.children.length > 0 && !canSummarize) {
-    createToastify("Conferma testo per riassunto", "error");
-  } else if (canSummarize) {
-    createToastify("Invio testo per Riassunto", "success");
   }
 
-  // Logica per il riassunto del testo
+  console.log("Testo da inviare:", textToSummarize);
+  const cleanedText = cleanText(textToSummarize);
+
+  // Disabilita il pulsante durante l'elaborazione
+  summarizeBtn.disabled = true;
+  summarizeBtn.textContent = "Elaborazione...";
+
+  sendToGemini(cleanedText).finally(() => {
+    // Riabilita il pulsante dopo l'elaborazione
+    summarizeBtn.disabled = false;
+    summarizeBtn.textContent = "Riassumi";
+  });
 });
 
+function cleanText(text) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+async function sendToGemini(text) {
+  const shimmer = document.querySelectorAll(
+    "#previewSummaryContainer .text-placeholder"
+  );
+  const textContainer = document.getElementById("summaryTextContainer");
+
+  // Pulisci il contenitore del riassunto precedente
+  textContainer.innerHTML = "";
+
+  shimmer.forEach((placeholder) => placeholder.classList.add("shimmer"));
+
+  if (!text || text.trim() === "") {
+    createToastify("Testo vuoto!", "error");
+    logSummary("Testo vuoto, impossibile riassumere", "error");
+    return;
+  }
+
+  // Controllo lunghezza testo
+  if (text.length > 100000) {
+    logSummary(
+      `⚠️ Testo molto lungo (${text.length} caratteri), potrebbe richiedere più tempo`,
+      "warning"
+    );
+    createToastify("Testo molto lungo, elaborazione in corso...", "info");
+  }
+
+  logSummary(
+    `📤 Invio testo al server Gemini per il riassunto (${text.length} caratteri)...`,
+    "info"
+  );
+
+  try {
+    // Timeout di 60 secondi per testi lunghi
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+    const response = await fetch("http://localhost:3000/summarize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Risposta server:", data);
+
+    const summary = Array.isArray(data)
+      ? data[0].summary_text
+      : data.summary_text;
+
+    shimmer.forEach((placeholder) => {
+      placeholder.classList.remove("shimmer");
+      placeholder.classList.add("hidden");
+    });
+
+    if (!summary || summary === "Nessun riassunto trovato") {
+      logSummary("❌ Nessun riassunto trovato nella risposta Gemini", "error");
+      createToastify("Errore: nessun riassunto trovato", "error");
+      return;
+    }
+
+    logSummary("✅ Riassunto ricevuto con successo da Gemini", "success");
+
+    const textSummarized = document.createElement("p");
+    textSummarized.textContent = summary;
+    textSummarized.classList.add("textContentSummary");
+    textContainer.appendChild(textSummarized);
+
+    const copy = document.createElement("button");
+    copy.textContent = "Copia Riassunto";
+    copy.addEventListener("click", () => {
+      navigator.clipboard.writeText(textSummarized.textContent);
+      createToastify("Riassunto copiato negli appunti!", "success");
+    });
+    copy.classList.add("copyButton");
+    textContainer.appendChild(copy);
+
+    createToastify("Riassunto pronto!", "success");
+  } catch (err) {
+    logSummary(`❌ Errore richiesta Gemini: ${err.message}`, "error");
+
+    if (err.name === "AbortError") {
+      createToastify(
+        "Timeout: la richiesta ha impiegato troppo tempo. Prova con un testo più breve.",
+        "error"
+      );
+    } else if (err.message.includes("troppo lungo")) {
+      createToastify(
+        "Testo troppo lungo. Prova con un testo più breve.",
+        "error"
+      );
+    } else if (err.message.includes("Failed to fetch")) {
+      createToastify(
+        "Errore di connessione al server. Verifica che il backend sia attivo.",
+        "error"
+      );
+    } else {
+      createToastify(`Errore durante il riassunto: ${err.message}`, "error");
+    }
+  }
+}
+
+/* --- Logger aggiornato --- */
+const summaryLogger = document.getElementById("summaryLogger");
+function logSummary(message, type = "info") {
+  const msgDiv = document.createElement("div");
+  msgDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+  msgDiv.style.marginBottom = "4px";
+  msgDiv.style.fontFamily = "monospace";
+
+  switch (type) {
+    case "error":
+      msgDiv.style.color = "#f44336"; // rosso
+      break;
+    case "success":
+      msgDiv.style.color = "#4caf50"; // verde
+      break;
+    case "warning":
+      msgDiv.style.color = "#ff9800"; // arancione
+      break;
+    default:
+      msgDiv.style.color = "#9e9e9e"; // grigio info
+  }
+
+  summaryLogger.appendChild(msgDiv);
+  summaryLogger.scrollTop = summaryLogger.scrollHeight;
+}
 /* --- Drag & Drop --- */
 label.addEventListener("dragover", (e) => {
   e.preventDefault();

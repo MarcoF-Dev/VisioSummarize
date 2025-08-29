@@ -449,3 +449,73 @@ main {
 #finalizeTextButton.hidden {
   display: none;
 }
+
+#ocrLogger {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  width: 220px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  z-index: 9999;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+#ocrProgressBar {
+  width: 0%;
+  height: 6px;
+  background-color: #4caf50;
+  border-radius: 3px;
+  margin-bottom: 5px;
+  transition: width 0.2s ease;
+}
+
+#ocrLogText {
+  margin: 0;
+}
+
+#summaryLogger {
+  position: fixed;
+  bottom: 1rem;
+  left: 1rem;
+  max-width: 300px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-family: monospace;
+  font-size: 0.9rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  z-index: 9999;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+#summaryLogger div {
+  margin-bottom: 0.3rem;
+}
+
+.copyButton {
+  background-color: #088ff0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copyButton:hover {
+  background-color: #006fc3;
+}
+.textContentSummary {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  color: #333;
+}
