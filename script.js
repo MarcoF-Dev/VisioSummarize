@@ -547,13 +547,8 @@ summarizeBtn.addEventListener("click", () => {
   const cleanedText = cleanText(textToSummarize);
 
   // Disabilita il pulsante durante l'elaborazione
-  summarizeBtn.disabled = true;
-  summarizeBtn.textContent = "Elaborazione...";
 
-  sendToGemini(cleanedText).finally(() => {
-    summarizeBtn.disabled = false;
-    summarizeBtn.textContent = "Genera Riassunto";
-  });
+  sendToGemini(cleanedText);
 });
 
 function cleanText(text) {
