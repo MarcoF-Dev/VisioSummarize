@@ -24,7 +24,7 @@ let ocrIsScanning = false;
 let canSummarize = false;
 
 const maxSizePdf = 5 * 1024 * 1024; // 5 MB
-const maxSizeImg = 3 * 1024 * 1024; // 3 MB
+const maxSizeImg = 10 * 1024 * 1024; // 10 MB
 
 /* --- Funzioni principali --- */
 function addFile(filesFromDrop) {
@@ -32,12 +32,13 @@ function addFile(filesFromDrop) {
     filesFromDrop instanceof Event
       ? Array.from(fileInput.files)
       : Array.from(filesFromDrop);
-
   if (!files.length) return createToastify("Nessun file selezionato", "error");
 
   labelContent.classList.add("hidden");
 
   files.forEach((currentFile) => {
+    console.log("DEBUG FILE:", currentFile.name, currentFile.type);
+
     if (
       [
         ...uploadedFiles.image,
@@ -55,7 +56,7 @@ function addFile(filesFromDrop) {
 
     if (currentFile.type.startsWith("image/") && currentFile.size > maxSizeImg)
       return createToastify(
-        `${currentFile.name} troppo grande (Max 3 MB)`,
+        `${currentFile.name} troppo grande (Max 10 MB)`,
         "error"
       );
 
@@ -69,9 +70,11 @@ function addFile(filesFromDrop) {
         "error"
       );
 
+    // --- Gestione immagini con compressione ---
     if (
       currentFile.type.startsWith("image/") ||
-      /\.(jpg|jpeg|png|heic)$/i.test(currentFile.name)
+      /\.(jpg|jpeg|png|heic|heif)$/i.test(currentFile.name) ||
+      currentFile.type === ""
     )
       handleImage(currentFile);
     else if (
@@ -96,34 +99,108 @@ function handleImage(file) {
 
   const reader = new FileReader();
   reader.onload = (event) => {
-    const imgContainer = document.createElement("div");
-    imgContainer.classList.add("imageContainer", "uploadedFileContainer");
+    const img = new Image();
+    img.onload = () => {
+      // Canvas per compressione
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const maxWidth = 1080; // larghezza massima
+      const scale = img.width > maxWidth ? maxWidth / img.width : 1;
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    const img = document.createElement("img");
+      canvas.toBlob(
+        (blob) => {
+          const compressedFile = new File(
+            [blob],
+            file.name.replace(/\.[^/.]+$/, ".jpg"),
+            { type: "image/jpeg" }
+          );
+
+          if (compressedFile.size > maxSizeImg) {
+            createToastify(
+              `${file.name} ancora troppo grande dopo compressione`,
+              "error"
+            );
+            return;
+          }
+
+          const src = URL.createObjectURL(compressedFile);
+
+          // Rimuovi scritta/icone dalla label
+          labelContent.classList.add("hidden");
+
+          // Crea container immagine
+          const imgContainer = document.createElement("div");
+          imgContainer.classList.add("imageContainer", "uploadedFileContainer");
+
+          const previewImg = document.createElement("img");
+          previewImg.src = src;
+          previewImg.classList.add("labelImg");
+          imgContainer.appendChild(previewImg);
+
+          // Pulsante chiusura
+          const closeButton = document.createElement("button");
+          closeButton.textContent = "X";
+          closeButton.classList.add("closeButton");
+          closeButton.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            imgContainer.remove();
+            uploadedFiles.image = uploadedFiles.image.filter(
+              (f) => f !== compressedFile
+            );
+            uploadedFilesType.image--;
+            if (uploadedFiles.image.length === 0)
+              labelContent.classList.remove("hidden");
+          });
+          imgContainer.appendChild(closeButton);
+
+          // Aggiungi al container principale
+          fileContainer.appendChild(imgContainer);
+
+          uploadedFiles.image.push(compressedFile);
+          uploadedFilesType.image++;
+          createToastify(`${file.name} caricato`, "success");
+        },
+        "image/jpeg",
+        0.7
+      ); // compressione 70%
+    };
     img.src = event.target.result;
-    img.classList.add("labelImg");
-
-    const closeButton = document.createElement("button");
-    closeButton.textContent = "X";
-    closeButton.classList.add("closeButton");
-    closeButton.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      imgContainer.remove();
-      uploadedFiles.image = uploadedFiles.image.filter((f) => f !== file);
-      uploadedFilesType.image--;
-      resetProcessingArrays();
-      checkEmptyContainer();
-      createToastify(`${file.name} rimosso`, "info");
-    });
-
-    imgContainer.append(img, closeButton);
-    fileContainer.appendChild(imgContainer);
-    uploadedFiles.image.push(file);
-    uploadedFilesType.image++;
-    createToastify(`${file.name} caricato con successo`, "success");
   };
   reader.readAsDataURL(file);
+}
+
+/* --- Resto delle funzioni inalterato --- */
+function addImageToUI(file, src) {
+  const imgContainer = document.createElement("div");
+  imgContainer.classList.add("imageContainer", "uploadedFileContainer");
+
+  const img = document.createElement("img");
+  img.src = src;
+  img.classList.add("labelImg");
+
+  const closeButton = document.createElement("button");
+  closeButton.textContent = "X";
+  closeButton.classList.add("closeButton");
+  closeButton.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    imgContainer.remove();
+    uploadedFiles.image = uploadedFiles.image.filter((f) => f !== file);
+    uploadedFilesType.image--;
+    resetProcessingArrays();
+    checkEmptyContainer();
+    createToastify(`${file.name} rimosso`, "info");
+  });
+
+  imgContainer.append(img, closeButton);
+  fileContainer.appendChild(imgContainer);
+  uploadedFiles.image.push(file);
+  uploadedFilesType.image++;
+  createToastify(`${file.name} caricato con successo`, "success");
 }
 
 async function handlePDF(file) {
@@ -203,7 +280,6 @@ function handleText(file) {
   };
   reader.readAsText(file);
 }
-
 function checkEmptyContainer() {
   if (!fileContainer.querySelector(".uploadedFileContainer"))
     labelContent.classList.remove("hidden");
@@ -475,161 +551,32 @@ summarizeBtn.addEventListener("click", () => {
   summarizeBtn.textContent = "Elaborazione...";
 
   sendToGemini(cleanedText).finally(() => {
-    // Riabilita il pulsante dopo l'elaborazione
     summarizeBtn.disabled = false;
-    summarizeBtn.textContent = "Riassumi";
+    summarizeBtn.textContent = "Genera Riassunto";
   });
 });
 
 function cleanText(text) {
-  return text.replace(/\s+/g, " ").trim();
+  return text.replace(/\n/g, " ").replace(/\s+/g, " ").trim();
 }
 
 async function sendToGemini(text) {
-  const shimmer = document.querySelectorAll(
-    "#previewSummaryContainer .text-placeholder"
-  );
-  const textContainer = document.getElementById("summaryTextContainer");
-
-  // Pulisci il contenitore del riassunto precedente
-  textContainer.innerHTML = "";
-
-  shimmer.forEach((placeholder) => placeholder.classList.add("shimmer"));
-
-  if (!text || text.trim() === "") {
-    createToastify("Testo vuoto!", "error");
-    logSummary("Testo vuoto, impossibile riassumere", "error");
-    return;
-  }
-
-  // Controllo lunghezza testo
-  if (text.length > 100000) {
-    logSummary(
-      `⚠️ Testo molto lungo (${text.length} caratteri), potrebbe richiedere più tempo`,
-      "warning"
-    );
-    createToastify("Testo molto lungo, elaborazione in corso...", "info");
-  }
-
-  logSummary(
-    `📤 Invio testo al server Gemini per il riassunto (${text.length} caratteri)...`,
-    "info"
-  );
-
   try {
-    // Timeout di 60 secondi per testi lunghi
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-    const response = await fetch(
-      "https://visiosummarize.onrender.com/summarize",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-        signal: controller.signal,
-      }
-    );
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || `HTTP ${response.status}`);
-    }
-
+    const response = await fetch("/summarize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
     const data = await response.json();
-    console.log("Risposta server:", data);
-
-    const summary = Array.isArray(data)
-      ? data[0].summary_text
-      : data.summary_text;
-
-    shimmer.forEach((placeholder) => {
-      placeholder.classList.remove("shimmer");
-      placeholder.classList.add("hidden");
-    });
-
-    if (!summary || summary === "Nessun riassunto trovato") {
-      logSummary("❌ Nessun riassunto trovato nella risposta Gemini", "error");
-      createToastify("Errore: nessun riassunto trovato", "error");
-      return;
-    }
-
-    logSummary("✅ Riassunto ricevuto con successo da Gemini", "success");
-
-    const textSummarized = document.createElement("p");
-    textSummarized.textContent = summary;
-    textSummarized.classList.add("textContentSummary");
-    textContainer.appendChild(textSummarized);
-
-    const copy = document.createElement("button");
-    copy.textContent = "Copia Riassunto";
-    copy.addEventListener("click", () => {
-      navigator.clipboard.writeText(textSummarized.textContent);
-      createToastify("Riassunto copiato negli appunti!", "success");
-    });
-    copy.classList.add("copyButton");
-    textContainer.appendChild(copy);
-
-    createToastify("Riassunto pronto!", "success");
+    displaySummary(data.summary);
   } catch (err) {
-    logSummary(`❌ Errore richiesta Gemini: ${err.message}`, "error");
-
-    if (err.name === "AbortError") {
-      createToastify(
-        "Timeout: la richiesta ha impiegato troppo tempo. Prova con un testo più breve.",
-        "error"
-      );
-    } else if (err.message.includes("troppo lungo")) {
-      createToastify(
-        "Testo troppo lungo. Prova con un testo più breve.",
-        "error"
-      );
-    } else if (err.message.includes("Failed to fetch")) {
-      createToastify(
-        "Errore di connessione al server. Verifica che il backend sia attivo.",
-        "error"
-      );
-    } else {
-      createToastify(`Errore durante il riassunto: ${err.message}`, "error");
-    }
+    createToastify("Errore nella richiesta al server", "error");
+    console.error(err);
   }
 }
 
-/* --- Logger aggiornato --- */
-const summaryLogger = document.getElementById("summaryLogger");
-function logSummary(message, type = "info") {
-  const msgDiv = document.createElement("div");
-  msgDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-  msgDiv.style.marginBottom = "4px";
-  msgDiv.style.fontFamily = "monospace";
-
-  switch (type) {
-    case "error":
-      msgDiv.style.color = "#f44336"; // rosso
-      break;
-    case "success":
-      msgDiv.style.color = "#4caf50"; // verde
-      break;
-    case "warning":
-      msgDiv.style.color = "#ff9800"; // arancione
-      break;
-    default:
-      msgDiv.style.color = "#9e9e9e"; // grigio info
-  }
-
-  summaryLogger.appendChild(msgDiv);
-  summaryLogger.scrollTop = summaryLogger.scrollHeight;
+function displaySummary(summary) {
+  const summaryContainer = document.getElementById("summaryContainer");
+  summaryContainer.textContent =
+    summary || "Nessun riassunto trovato nella risposta";
 }
-/* --- Drag & Drop --- */
-label.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  label.classList.add("dragover");
-});
-label.addEventListener("dragleave", () => label.classList.remove("dragover"));
-label.addEventListener("drop", (e) => {
-  e.preventDefault();
-  label.classList.remove("dragover");
-  addFile(Array.from(e.dataTransfer.files));
-});
