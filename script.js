@@ -521,12 +521,15 @@ async function sendToGemini(text) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-    const response = await fetch("http://localhost:3000/summarize", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text }),
-      signal: controller.signal,
-    });
+    const response = await fetch(
+      "https://visiosummarize.onrender.com/summarize",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal: controller.signal,
+      }
+    );
 
     clearTimeout(timeoutId);
 
