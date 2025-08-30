@@ -2,6 +2,8 @@
 
 **VisioSummarizer** è un’applicazione web interattiva realizzata come esercizio pratico di programmazione avanzata in JavaScript. Permette di estrarre testo da immagini e PDF e generare un riassunto intelligente del contenuto, visualizzando anche concetti chiave.
 
+🔗 **Link al sito**: [VisioSummarizer - GitHub Pages](https://marcof-dev.github.io/VisioSummarize/)
+
 ## Caratteristiche principali
 
 - **Estrazione testo**: supporta il caricamento di immagini e PDF per l’estrazione automatica del testo tramite OCR.  
@@ -20,7 +22,8 @@
 - **HTML, CSS, JavaScript** per l’interfaccia e la logica dell’applicazione.  
 - **Tesseract.js** per l’OCR e l’estrazione del testo da immagini e PDF.  
 - **API Gemini** per la generazione dei riassunti automatici.  
-- **Responsive design** tramite media queries per garantire l’uso ottimale su dispositivi di qualsiasi dimensione.
+- **Responsive design** tramite media queries per garantire l’uso ottimale su dispositivi di qualsiasi dimensione.  
+- **Render** per il deploy e l’hosting online del server.  
 
 ## Istruzioni per l’uso
 
@@ -33,4 +36,5 @@
 ## Note aggiuntive
 
 - È consigliato utilizzare l’applicazione con testi di dimensioni moderate per garantire prestazioni ottimali.  
-- Il progetto può servire come base per applicazioni più complesse di analisi e sintesi dei contenuti multimediali, anche su dispositivi mobili.
+- Il progetto può servire come base per applicazioni più complesse di analisi e sintesi dei contenuti multimediali, anche su dispositivi mobili.  
+- Il **server** è stato caricato online tramite **Render**, per gestire le richieste API e garantire l’accessibilità del servizio.
