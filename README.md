@@ -1,4 +1,6 @@
-# VisioSummarizer
+ # VisioSummarizer
+  
+
 
 **VisioSummarizer** è un’applicazione web interattiva realizzata come esercizio pratico di programmazione avanzata in JavaScript. Permette di estrarre testo da immagini e PDF e generare un riassunto intelligente del contenuto, visualizzando anche concetti chiave.
 
