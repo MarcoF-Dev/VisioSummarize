@@ -2,14 +2,14 @@ const fileInput = document.getElementById("fileInput");
 const label = document.getElementById("labelContainer");
 const labelContent = document.getElementById("fileDropTitleContainer");
 const fileContainer = document.getElementById("fileDropContainer");
-const uploadBtn = document.getElementById("uploadButtonNavbar");
+
 const extractTextButton = document.getElementById("extractTextButton");
 const extractedTextContainer = document.getElementById(
   "extractedTextContainer"
 );
 const summarizeBtn = document.getElementById("summarizeTextButton");
 
-uploadBtn.addEventListener("click", () => fileInput.click());
+
 fileInput.addEventListener("change", addFile);
 
 let uploadedFiles = { image: [], pdf: [], text: [] };
